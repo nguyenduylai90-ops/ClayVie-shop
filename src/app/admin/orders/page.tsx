@@ -1,76 +1,89 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Database } from '@/lib/types';
 
-type Order = Database['public']['Tables']['orders']['Row'];
+export default function OrdersPage() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function AdminOrdersPage() {
-  const { data: orders } = await supabase
-    .from('orders')
-    .select('*')
-    .order('created_at', { ascending: false });
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-700';
-      case 'confirmed': return 'bg-blue-100 text-blue-700';
-      case 'shipping': return 'bg-purple-100 text-purple-700';
-      case 'completed': return 'bg-green-100 text-green-700';
-      case 'cancelled': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+  const fetchOrders = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error) {
+      setOrders(data);
+    }
+    setLoading(false);
+  };
+
+  const updateStatus = async (id: string, newStatus: string) => {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: newStatus })
+      .eq('id', id);
+
+    if (!error) {
+      fetchOrders(); // Tải lại danh sách sau khi cập nhật
     }
   };
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Quản lý Đơn hàng</h1>
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-800">📦 Quản lý Đơn hàng</h1>
+        <button onClick={fetchOrders} className="text-pink-600 hover:underline">Làm mới</button>
+      </div>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <table className="w-full text-left">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
-              <th className="px-6 py-4 font-semibold text-gray-600">Mã đơn</th>
-              <th className="px-6 py-4 font-semibold text-gray-600">Khách hàng</th>
-              <th className="px-6 py-4 font-semibold text-gray-600">Ngày đặt</th>
-              <th className="px-6 py-4 font-semibold text-gray-600">Tổng tiền</th>
-              <th className="px-6 py-4 font-semibold text-gray-600">Trạng thái</th>
-              <th className="px-6 py-4 font-semibold text-gray-600 text-right">Thao tác</th>
+              <th className="p-4 font-bold text-gray-600">Khách hàng</th>
+              <th className="p-4 font-bold text-gray-600">Số điện thoại</th>
+              <th className="p-4 font-bold text-gray-600">Tổng tiền</th>
+              <th className="p-4 font-bold text-gray-600">Trạng thái</th>
+              <th className="p-4 font-bold text-gray-600">Ngày đặt</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
-            {orders && orders.length > 0 ? (
+          <tbody className="divide-y divide-gray-50">
+            {loading ? (
+              <tr><td colSpan={5} className="p-10 text-center text-gray-400">Đang tải đơn hàng...</td></tr>
+            ) : orders.length === 0 ? (
+              <tr><td colSpan={5} className="p-10 text-center text-gray-400">Chưa có đơn hàng nào.</td></tr>
+            ) : (
               orders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 font-mono text-xs text-gray-400">
-                    {order.id.substring(0, 8)}...
+                  <td className="p-4 font-medium">{order.customer_name}</td>
+                  <td className="p-4 text-gray-600">{order.customer_phone}</td>
+                  <td className="p-4 font-bold text-pink-600">{Number(order.total_price).toLocaleString('vi-VN')}đ</td>
+                  <td className="p-4">
+                    <select 
+                      value={order.status}
+                      onChange={(e) => updateStatus(order.id, e.target.value)}
+                      className={`text-xs font-bold px-3 py-1 rounded-full border-none outline-none ${
+                        order.status === 'completed' ? 'bg-green-100 text-green-600' : 
+                        order.status === 'pending' ? 'bg-yellow-100 text-yellow-600' : 
+                        'bg-red-100 text-red-600'
+                      }`}
+                    >
+                      <option value="pending">Chờ xử lý</option>
+                      <option value="completed">Đã giao</option>
+                      <option value="cancelled">Đã hủy</option>
+                    </select>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-800">{order.customer_name}</div>
-                    <div className="text-xs text-gray-500">{order.customer_phone}</div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">
+                  <td className="p-4 text-gray-400 text-sm">
                     {new Date(order.created_at).toLocaleDateString('vi-VN')}
-                  </td>
-                  <td className="px-6 py-4 font-bold text-pink-600">
-                    {order.total_price.toLocaleString('vi-VN')} đ
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(order.status)}`}>
-                      {order.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-                      Chi tiết
-                    </button>
                   </td>
                 </tr>
               ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                  Chưa có đơn hàng nào.
-                </td>
-              </tr>
             )}
           </tbody>
         </table>
