@@ -15,11 +15,16 @@ export default function CustomerLayout({
             <span className="bg-pink-100 text-pink-600 text-[10px] px-2 py-0.5 rounded-full font-bold">HANDMADE</span>
           </Link>
           
-          <nav className="hidden md:flex items-center gap-8">
+    <nav className="hidden md:flex items-center gap-8">
   <Link href="/" className="text-gray-600 hover:text-pink-600 font-medium transition">Trang chủ</Link>
   <a href="#san-pham" className="text-gray-600 hover:text-pink-600 font-medium transition">Sản phẩm</a>
+  {/* Thêm link Tra cứu đơn hàng mới nè anh */}
   <Link href="/track-order" className="text-pink-600 hover:text-pink-700 font-bold transition">Tra cứu đơn hàng</Link>
+  {/* Trả lại 2 mục anh muốn giữ đây ạ */}
+  <Link href="/" className="text-gray-600 hover:text-pink-600 font-medium transition">Về chúng tôi</Link>
+  <Link href="/" className="text-gray-600 hover:text-pink-600 font-medium transition">Liên hệ</Link>
 </nav>
+
 
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm font-bold text-gray-400 hover:text-pink-600 transition">Admin</Link>
