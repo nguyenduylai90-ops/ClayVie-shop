@@ -16,11 +16,10 @@ export default function CustomerLayout({
           </Link>
           
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-gray-600 hover:text-pink-600 font-medium transition">Trang chủ</Link>
-            <a href="#san-pham" className="text-gray-600 hover:text-pink-600 font-medium transition">Sản phẩm</a>
-            <span className="text-gray-300 cursor-not-allowed">Về chúng tôi</span>
-            <span className="text-gray-300 cursor-not-allowed">Liên hệ</span>
-          </nav>
+  <Link href="/" className="text-gray-600 hover:text-pink-600 font-medium transition">Trang chủ</Link>
+  <a href="#san-pham" className="text-gray-600 hover:text-pink-600 font-medium transition">Sản phẩm</a>
+  <Link href="/track-order" className="text-pink-600 hover:text-pink-700 font-bold transition">Tra cứu đơn hàng</Link>
+</nav>
 
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm font-bold text-gray-400 hover:text-pink-600 transition">Admin</Link>
