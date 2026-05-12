@@ -50,7 +50,7 @@ export default function OrdersPage() {
             <thead className="bg-gray-50/50 border-b border-gray-100">
               <tr>
                 <th className="p-6 font-bold text-gray-400 text-[10px] uppercase tracking-[0.2em]">Khách hàng</th>
-                <th className="p-6 font-bold text-gray-400 text-[10px] uppercase tracking-[0.2em]">Số điện thoại</th>
+                <th className="p-6 font-bold text-gray-400 text-[10px] uppercase tracking-[0.2em]">SĐT & Địa chỉ</th>
                 <th className="p-6 font-bold text-gray-400 text-[10px] uppercase tracking-[0.2em]">Yêu cầu / Ghi chú</th>
                 <th className="p-6 font-bold text-gray-400 text-[10px] uppercase tracking-[0.2em]">Tài chính (Ứng/Còn)</th>
                 <th className="p-6 font-bold text-gray-400 text-[10px] uppercase tracking-[0.2em]">Trạng thái</th>
@@ -66,19 +66,24 @@ export default function OrdersPage() {
                   <tr key={order.id} className="hover:bg-gray-50/50 transition-all duration-300">
                     <td className="p-6">
                       <p className="font-black text-gray-800 text-lg">{order.customer_name}</p>
-                      <p className="text-[10px] text-gray-400 font-mono">#{order.id.slice(0, 8).toUpperCase()}</p>
+                      <p className="text-[10px] text-gray-400 font-mono tracking-tighter">#{order.id.slice(0, 8).toUpperCase()}</p>
                     </td>
                     
+                    {/* CỘT SĐT VÀ ĐỊA CHỈ GỘP CHUNG ĐÂY ANH */}
                     <td className="p-6">
-                      <a href={`tel:${order.customer_phone}`} className="font-bold text-blue-600 text-lg">
-                        {order.customer_phone}
-                      </a>
+                      <div className="space-y-1">
+                        <a href={`tel:${order.customer_phone}`} className="font-black text-blue-600 text-xl tracking-tight hover:underline">
+                          {order.customer_phone}
+                        </a>
+                        <p className="text-sm text-gray-500 font-medium max-w-[200px] leading-snug">
+                          📍 {order.customer_address || 'Chưa để lại địa chỉ'}
+                        </p>
+                      </div>
                     </td>
 
-                    {/* Cột Ghi chú đã được gỡ bỏ giới hạn 2 dòng đây anh */}
                     <td className="p-6">
                       <div className="bg-pink-50/30 p-4 rounded-2xl border border-pink-100/50 min-w-[200px]">
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap italic">
+                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap italic font-medium">
                           {order.customer_notes || 'Không có ghi chú'}
                         </p>
                       </div>
