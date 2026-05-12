@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/context/CartContext';
 
 function CheckoutContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { cart, clearCart } = useCart();
   
   const [loading, setLoading] = useState(false);
@@ -17,7 +16,6 @@ function CheckoutContent() {
     address: '',
   });
 
-  // Tính tổng tiền từ giỏ hàng
   const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,11 +40,28 @@ function CheckoutContent() {
 
       if (orderError) throw orderError;
 
-      // 2. Lưu chi tiết từng món hoa trong giỏ (nếu anh có bảng order_items)
-      // Tạm thời bản này mình chỉ cần lưu thông tin đơn hàng chính là đủ để anh gọi điện cho khách rồi.
+      // 2. CẬP NHẬT TỒN KHO - TRỪ SỐ LƯỢNG SẢN PHẨM
+      // Duyệt qua từng sản phẩm trong giỏ hàng để trừ kho
+      for (const item of cart) {
+        // Lấy số lượng hiện tại từ database trước để đảm bảo chính xác
+        const { data: currentProduct } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.id)
+          .single();
 
-      alert('Đặt hàng thành công! ClayVie sẽ sớm liên hệ với bạn. 🌸');
-      clearCart(); // Xóa giỏ hàng sau khi đặt xong
+        if (currentProduct) {
+          const newStock = Math.max(0, currentProduct.stock_quantity - item.quantity);
+          
+          await supabase
+            .from('products')
+            .update({ stock_quantity: newStock })
+            .eq('id', item.id);
+        }
+      }
+
+      alert('Đặt hàng thành công! Số lượng tồn kho đã được cập nhật. 🌸');
+      clearCart(); 
       router.push('/');
     } catch (error: any) {
       alert('Lỗi đặt hàng: ' + error.message);
