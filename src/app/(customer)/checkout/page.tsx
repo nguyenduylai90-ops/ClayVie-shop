@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
-export default function CheckoutPage() {
+// Tách nội dung Checkout ra component con để dùng Suspense
+function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const productId = searchParams.get('productId');
@@ -19,23 +20,20 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (productId) {
+      const fetchProduct = async () => {
+        const { data } = await supabase.from('products').select('*').eq('id', productId).single();
+        setProduct(data);
+      };
       fetchProduct();
     }
   }, [productId]);
 
-  const fetchProduct = async () => {
-    const { data } = await supabase.from('products').select('*').eq('id', productId).single();
-    setProduct(data);
-  };
-
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
-    
     setLoading(true);
 
     try {
-      // 1. Create Order
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([
@@ -52,7 +50,6 @@ export default function CheckoutPage() {
 
       if (orderError) throw orderError;
 
-      // 2. Create Order Item
       const { error: itemError } = await supabase
         .from('order_items')
         .insert([
@@ -75,14 +72,12 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!productId) return <div className="p-20 text-center">Giỏ hàng trống.</div>;
+  if (!productId) return <div className="p-20 text-center text-gray-500">Giỏ hàng trống hoặc sản phẩm không tồn tại.</div>;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-8">Thanh toán</h1>
-
       <div className="flex flex-col md:flex-row gap-12">
-        {/* Form */}
         <div className="flex-[2] space-y-6">
           <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
             <h2 className="text-xl font-bold mb-6">Thông tin giao hàng</h2>
@@ -119,7 +114,6 @@ export default function CheckoutPage() {
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 />
               </div>
-              
               <button
                 disabled={loading}
                 type="submit"
@@ -130,8 +124,6 @@ export default function CheckoutPage() {
             </form>
           </div>
         </div>
-
-        {/* Summary */}
         <div className="flex-1">
           <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 sticky top-24">
             <h2 className="text-lg font-bold mb-4">Đơn hàng của bạn</h2>
@@ -145,21 +137,14 @@ export default function CheckoutPage() {
                     <div className="font-bold text-gray-800 text-sm">{product.name}</div>
                     <div className="text-gray-500 text-xs">Số lượng: 1</div>
                   </div>
-                  <div className="font-bold text-pink-600 text-sm">
-                    {product.price.toLocaleString('vi-VN')}đ
-                  </div>
+                  <div className="font-bold text-pink-600 text-sm">{product.price.toLocaleString('vi-VN')}đ</div>
                 </div>
-                
                 <div className="border-t pt-4 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Tạm tính:</span>
                     <span>{product.price.toLocaleString('vi-VN')}đ</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Phí vận chuyển:</span>
-                    <span className="text-green-600 font-medium">Miễn phí</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                  <div className="flex justify-between font-bold pt-2 border-t">
                     <span>Tổng cộng:</span>
                     <span className="text-pink-600">{product.price.toLocaleString('vi-VN')}đ</span>
                   </div>
@@ -170,5 +155,14 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Export default chính của trang, có bọc Suspense
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center">Đang tải thông tin thanh toán...</div>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }
