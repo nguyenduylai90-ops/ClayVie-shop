@@ -20,8 +20,12 @@ export default function CustomerLayout({
             <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
               <Link href="/" className="hover:text-pink-600 transition">Trang chủ</Link>
               <Link href="/products" className="hover:text-pink-600 transition">Sản phẩm</Link>
+              <Link href="/track-order" className="hover:text-pink-600 transition">Tra cứu đơn hàng</Link>
+              <Link href="/custom-order" className="bg-pink-50 text-pink-600 px-4 py-2 rounded-full hover:bg-pink-100 transition flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
+                Đặt theo yêu cầu
+              </Link>
               <Link href="/about" className="hover:text-pink-600 transition">Về chúng tôi</Link>
-              <Link href="/contact" className="hover:text-pink-600 transition">Liên hệ</Link>
             </div>
 
             <div className="flex items-center gap-4">
