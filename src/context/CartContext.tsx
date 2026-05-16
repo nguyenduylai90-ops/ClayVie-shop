@@ -13,8 +13,8 @@ type CartItem = {
 type CartContextType = {
   cart: CartItem[];
   addToCart: (product: any, quantity: number) => void;
-  removeFromCart: (id: string) => void;
-  updateQuantity: (id: string, delta: number) => void;
+  removeFromCart: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   cartCount: number;
 };
@@ -24,11 +24,13 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
 
+  // Tải giỏ hàng từ máy khách lên khi mở web
   useEffect(() => {
     const savedCart = localStorage.getItem('clayvie-cart');
     if (savedCart) setCart(JSON.parse(savedCart));
   }, []);
 
+  // Lưu giỏ hàng mỗi khi có thay đổi
   useEffect(() => {
     localStorage.setItem('clayvie-cart', JSON.stringify(cart));
   }, [cart]);
@@ -45,18 +47,20 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
-  const removeFromCart = (id: string) => {
-    setCart((prev) => prev.filter(item => item.id !== id));
+  const removeFromCart = (productId: string) => {
+    setCart((prev) => prev.filter((item) => item.id !== productId));
   };
 
-  const updateQuantity = (id: string, delta: number) => {
-    setCart((prev) => prev.map(item => {
-      if (item.id === id) {
-        const newQty = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQty };
-      }
-      return item;
-    }));
+  const updateQuantity = (productId: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === productId ? { ...item, quantity } : item
+      )
+    );
   };
 
   const clearCart = () => setCart([]);

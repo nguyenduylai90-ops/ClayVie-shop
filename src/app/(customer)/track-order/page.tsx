@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function TrackOrderPage() {
@@ -11,81 +11,80 @@ export default function TrackOrderPage() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!/^\d{10}$/.test(phone)) {
-      return alert('Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 chữ số ạ! 🌸');
-    }
     setLoading(true);
     setSearched(true);
+
     const { data, error } = await supabase
       .from('orders')
       .select('*')
       .eq('customer_phone', phone)
       .order('created_at', { ascending: false });
-    if (!error) setOrders(data);
+
+    if (!error) {
+      setOrders(data);
+    }
     setLoading(false);
   };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-20">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tighter uppercase">Tra cứu đơn hàng</h1>
-        <p className="text-gray-500 text-lg italic">Nhập số điện thoại để kiểm tra hành trình hoa của bạn</p>
+        <h1 className="text-4xl font-black text-gray-900 mb-4">Tra cứu đơn hàng</h1>
+        <p className="text-gray-500">Nhập số điện thoại của bạn để kiểm tra trạng thái đơn hàng tại ClayVie</p>
       </div>
 
-      <form onSubmit={handleSearch} className="flex gap-3 mb-16 p-2 bg-gray-50 rounded-[32px] border border-gray-100 shadow-inner">
+      <form onSubmit={handleSearch} className="flex gap-2 mb-12">
         <input
-          type="tel" required maxLength={10}
-          placeholder="Nhập 10 số điện thoại..."
-          className="flex-1 p-5 bg-transparent rounded-2xl outline-none text-xl font-black tracking-[0.2em] text-pink-600"
+          type="tel"
+          required
+          placeholder="Nhập số điện thoại (ví dụ: 0901...)"
+          className="flex-1 p-4 border-2 border-gray-100 rounded-2xl focus:border-pink-500 outline-none transition"
           value={phone}
-          onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+          onChange={(e) => setPhone(e.target.value)}
         />
-        <button disabled={loading} type="submit" className="bg-pink-600 text-white px-10 py-5 rounded-[24px] font-black text-lg hover:bg-pink-700 transition shadow-xl shadow-pink-100 uppercase">
+        <button
+          disabled={loading}
+          type="submit"
+          className="bg-pink-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-pink-700 transition shadow-lg shadow-pink-100 disabled:bg-gray-300"
+        >
           {loading ? 'Đang tìm...' : 'Tìm kiếm'}
         </button>
       </form>
 
-      <div className="space-y-10">
+      <div className="space-y-6">
         {searched && orders.length === 0 && !loading && (
-          <div className="text-center py-16 bg-gray-50 rounded-[40px] border-4 border-dashed border-gray-100">
-            <p className="text-gray-400 font-bold text-xl uppercase tracking-tighter text-center">Chưa có đơn hàng cho số điện thoại này</p>
+          <div className="text-center py-10 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+            <p className="text-gray-400 font-medium">Không tìm thấy đơn hàng nào gắn với số điện thoại này. 🌸</p>
           </div>
         )}
 
-        {orders.map((order: any) => {
-          const remaining = order.total_price - (order.paid_amount || 0);
-          return (
-            <div key={order.id} className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-500">
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
-                <div>
-                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-2">Mã đơn hàng</p>
-                  <p className="font-mono text-2xl text-gray-800 font-black">#{order.id.slice(0, 8).toUpperCase()}</p>
-                </div>
-                <div className="px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest bg-pink-100 text-pink-600">
-                  {order.status}
-                </div>
+        {orders.map((order) => (
+          <div key={order.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Mã đơn hàng</p>
+                <p className="font-mono text-gray-600">#{order.id.slice(0, 8).toUpperCase()}</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 bg-gray-50 p-6 rounded-3xl border border-gray-100 text-center">
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Tổng cộng</p>
-                  <p className="font-black text-gray-800 text-xl">{Number(order.total_price).toLocaleString('vi-VN')}đ</p>
-                </div>
-                <div className="border-y md:border-y-0 md:border-x border-gray-200 py-4 md:py-0">
-                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Đã cọc</p>
-                  <p className="font-black text-green-600 text-xl">{Number(order.paid_amount || 0).toLocaleString('vi-VN')}đ</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Còn nợ</p>
-                  <p className="font-black text-pink-600 text-xl">{remaining.toLocaleString('vi-VN')}đ</p>
-                </div>
-              </div>
-              <div className="pt-8 border-t border-gray-50 text-sm">
-                <p className="font-black text-gray-800 uppercase tracking-tighter">{order.customer_name}</p>
-                <p className="text-gray-500 italic">📍 {order.customer_address}</p>
+              <div className={`px-4 py-1.5 rounded-full text-xs font-bold ${order.status === 'completed' ? 'bg-green-100 text-green-600' :
+                  order.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
+                    'bg-red-100 text-red-600'
+                }`}>
+                {order.status === 'completed' ? 'Đã giao thành công' :
+                  order.status === 'pending' ? 'Đang xử lý' : 'Đã hủy'}
               </div>
             </div>
-          );
-        })}
+
+            <div className="border-t border-gray-50 pt-4 flex justify-between items-center">
+              <div>
+                <p className="text-sm text-gray-500">Ngày đặt: {new Date(order.created_at).toLocaleDateString('vi-VN')}</p>
+                <p className="font-bold text-lg mt-1 text-gray-800">{Number(order.total_price).toLocaleString('vi-VN')}đ</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Người nhận: {order.customer_name}</p>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

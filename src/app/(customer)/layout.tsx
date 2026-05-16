@@ -1,60 +1,47 @@
-'use client';
-
-import React from 'react';
 import Link from 'next/link';
-import { useCart } from '@/context/CartContext';
+import CartButton from '@/components/CartButton';
 
 export default function CustomerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { cartCount } = useCart();
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <span className="text-3xl font-black text-pink-600 transition-transform group-hover:scale-110">ClayVie</span>
-            <span className="bg-pink-100 text-pink-600 text-[10px] px-2 py-0.5 rounded-full font-black">HANDMADE</span>
-          </Link>
-          
-          <nav className="hidden lg:flex items-center gap-8">
-            <Link href="/" className="text-gray-600 hover:text-pink-600 font-bold text-sm transition">Trang chủ</Link>
-            <a href="/#san-pham" className="text-gray-600 hover:text-pink-600 font-bold text-sm transition">Sản phẩm</a>
-            <Link href="/track-order" className="text-gray-600 hover:text-pink-600 font-bold text-sm transition">Tra cứu đơn hàng</Link>
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-pink-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link href="/" className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-pink-600">ClayVie</span>
+              <span className="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-medium">Handmade</span>
+            </Link>
             
-            <Link href="/custom-order" className="text-pink-600 hover:text-pink-700 font-black text-sm transition flex items-center gap-2 bg-pink-50 px-4 py-2 rounded-full border border-pink-100">
-              <span className="w-2 h-2 bg-pink-600 rounded-full animate-pulse"></span>
-              Đặt theo yêu cầu
-            </Link>
+            <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+              <Link href="/" className="hover:text-pink-600 transition">Trang chủ</Link>
+              <Link href="/products" className="hover:text-pink-600 transition">Sản phẩm</Link>
+              <Link href="/about" className="hover:text-pink-600 transition">Về chúng tôi</Link>
+              <Link href="/contact" className="hover:text-pink-600 transition">Liên hệ</Link>
+            </div>
 
-            <Link href="/" className="text-gray-600 hover:text-pink-600 font-bold text-sm transition">Về chúng tôi</Link>
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="hidden sm:block text-xs font-black text-gray-300 hover:text-pink-600 transition uppercase tracking-widest text-sm">Admin</Link>
-            <Link href="/checkout" className="relative bg-pink-600 text-white px-6 py-3 rounded-2xl font-black shadow-xl shadow-pink-100 hover:bg-pink-700 transition flex items-center gap-3">
-              <span className="text-sm">Giỏ hàng</span>
-              <span className="bg-white text-pink-600 px-2 py-0.5 rounded-full text-[10px] font-black">{cartCount}</span>
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link href="/admin" className="text-xs text-gray-400 hover:text-gray-600">Admin</Link>
+              <CartButton />
+            </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <main className="pt-20">
-        {children}
-      </main>
+      <main>{children}</main>
 
-      <footer className="bg-gray-50 border-t border-gray-100 py-20 mt-20">
+      {/* Footer */}
+      <footer className="bg-pink-50 py-12 mt-24 border-t border-pink-100">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="mb-8">
-            <span className="text-2xl font-black text-gray-800">ClayVie</span>
-            <p className="text-gray-400 mt-2 italic">Mang nghệ thuật đất sét vào cuộc sống của bạn</p>
+          <p className="text-pink-600 font-bold text-xl mb-4">ClayVie 🌸</p>
+          <p className="text-gray-500 text-sm">Trao gửi yêu thương qua từng cánh hoa đất sét.</p>
+          <div className="mt-8 pt-8 border-t border-pink-200 text-gray-400 text-xs">
+            © 2026 ClayVie. All rights reserved.
           </div>
-          <p className="text-[10px] text-gray-300 font-black uppercase tracking-[0.3em]">© 2024 ClayVie Handmade. All rights reserved.</p>
         </div>
       </footer>
     </div>
