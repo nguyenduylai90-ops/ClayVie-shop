@@ -25,7 +25,7 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (cart.length === 0) return;
 
-    // Validate số điện thoại (chính xác 10 chữ số)
+    // Validate phone number (exactly 10 digits)
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(formData.phone)) {
       alert('Vui lòng nhập đúng số điện thoại (chỉ bao gồm 10 chữ số).');
@@ -118,7 +118,6 @@ export default function CheckoutPage() {
                   placeholder="Ví dụ: 0912345678"
                   value={formData.phone}
                   onChange={(e) => {
-                    // Tự động loại bỏ các ký tự không phải là số khi người dùng gõ
                     const value = e.target.value.replace(/[^0-9]/g, '');
                     setFormData({ ...formData, phone: value });
                   }}
