@@ -35,6 +35,23 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
+      // 0. Check Stock Quantity
+      for (const item of cart) {
+        const { data: prod, error: prodError } = await supabase
+          .from('products')
+          .select('name, stock_quantity')
+          .eq('id', item.id)
+          .single();
+
+        if (prodError) throw prodError;
+
+        if (prod && prod.stock_quantity < item.quantity) {
+          alert(`Sản phẩm "${prod.name}" hiện chỉ còn ${prod.stock_quantity} mẫu trong kho. Vui lòng giảm số lượng đặt hàng nhé!`);
+          setLoading(false);
+          return;
+        }
+      }
+
       // 1. Create Order
       const { data: order, error: orderError } = await supabase
         .from('orders')
