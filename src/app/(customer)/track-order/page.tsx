@@ -11,6 +11,14 @@ export default function TrackOrderPage() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate phone number (exactly 10 digits)
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone)) {
+      alert('Vui lòng nhập đúng số điện thoại của bạn (bao gồm 10 chữ số) để tra cứu nhé! 🌸');
+      return;
+    }
+
     setLoading(true);
     setSearched(true);
 
@@ -37,10 +45,11 @@ export default function TrackOrderPage() {
         <input
           type="tel"
           required
-          placeholder="Nhập số điện thoại (ví dụ: 0901...)"
-          className="flex-1 p-4 border-2 border-gray-100 rounded-2xl focus:border-pink-500 outline-none transition"
+          maxLength={10}
+          placeholder="Nhập số điện thoại (ví dụ: 0901234567)"
+          className="flex-1 p-4 border-2 border-gray-100 rounded-2xl focus:border-pink-500 outline-none transition font-semibold"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
         />
         <button
           disabled={loading}
