@@ -15,6 +15,14 @@ export default function CustomOrderPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate phone number (exactly 10 digits)
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      alert('Vui lòng nhập đúng số điện thoại của bạn (bao gồm 10 chữ số) để ClayVie liên hệ tư vấn nhé! 🌸');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -23,7 +31,7 @@ export default function CustomOrderPage() {
         .insert({
           customer_name: formData.name,
           customer_phone: formData.phone,
-          customer_notes: `[YÊU CẦU RIÊNG]: ${formData.request}`,
+          customer_address: `[YÊU CẦU THIẾT KẾ RIÊNG]: ${formData.request}`,
           total_price: 0, // Giá 0đ để anh báo giá sau
           status: 'pending',
         });
@@ -66,10 +74,11 @@ export default function CustomOrderPage() {
               <label className="block text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Số điện thoại</label>
               <input
                 type="tel" required
+                maxLength={10}
                 className="w-full p-5 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-pink-500 outline-none font-bold"
-                placeholder="Để ClayVie gọi tư vấn"
+                placeholder="Ví dụ: 0901234567"
                 value={formData.phone}
-                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/[^0-9]/g, '') })}
               />
             </div>
           </div>

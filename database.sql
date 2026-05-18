@@ -37,18 +37,25 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 
--- 5. Create Policies (Example: Admin can do everything, public can view products)
-CREATE POLICY "Public can view products" ON products FOR SELECT USING (true);
-CREATE POLICY "Only authenticated admins can manage products" ON products FOR ALL TO authenticated USING (true);
-CREATE POLICY "Only authenticated admins can manage orders" ON orders FOR ALL TO authenticated USING (true);
-CREATE POLICY "Only authenticated admins can manage order_items" ON order_items FOR ALL TO authenticated USING (true);
-
--- Cho phép khách vãng lai gửi đơn hàng và lưu sản phẩm đơn hàng
+-- 5. Create Policies (Quyền truy cập cho cửa hàng ClayVie)
+-- Bỏ các policy cũ để tránh lỗi trùng lặp khi chạy lại
+DROP POLICY IF EXISTS "Public can view products" ON public.products;
+DROP POLICY IF EXISTS "Only authenticated admins can manage products" ON public.products;
+DROP POLICY IF EXISTS "Only authenticated admins can manage orders" ON public.orders;
+DROP POLICY IF EXISTS "Only authenticated admins can manage order_items" ON public.order_items;
 DROP POLICY IF EXISTS "Public can insert orders" ON public.orders;
 DROP POLICY IF EXISTS "Public can insert order_items" ON public.order_items;
+DROP POLICY IF EXISTS "Public can select orders" ON public.orders;
+DROP POLICY IF EXISTS "Public can update orders" ON public.orders;
+DROP POLICY IF EXISTS "Public can select order_items" ON public.order_items;
+DROP POLICY IF EXISTS "Public can manage products" ON public.products;
+DROP POLICY IF EXISTS "Public can manage orders" ON public.orders;
+DROP POLICY IF EXISTS "Public can manage order_items" ON public.order_items;
 
-CREATE POLICY "Public can insert orders" ON public.orders FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public can insert order_items" ON public.order_items FOR INSERT WITH CHECK (true);
+-- Thiết lập quyền Public để Admin không cần đăng nhập vẫn quản lý được qua API Client
+CREATE POLICY "Public can manage products" ON public.products FOR ALL USING (true);
+CREATE POLICY "Public can manage orders" ON public.orders FOR ALL USING (true);
+CREATE POLICY "Public can manage order_items" ON public.order_items FOR ALL USING (true);
 
 -- 6. Trigger tự động trừ hàng tồn kho khi đặt hàng thành công
 CREATE OR REPLACE FUNCTION public.subtract_product_stock()
@@ -61,7 +68,64 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trigger_subtract_stock ON public.order_items;
 CREATE TRIGGER trigger_subtract_stock
 AFTER INSERT ON public.order_items
 FOR EACH ROW
 EXECUTE FUNCTION public.subtract_product_stock();
+
+-- 7. Trigger tự động CỘNG LẠI hàng tồn kho khi HỦY đơn hàng (status = 'cancelled')
+CREATE OR REPLACE FUNCTION public.handle_order_status_stock_adjustment()
+RETURNS TRIGGER AS $$
+DECLARE
+  item RECORD;
+BEGIN
+  -- Trường hợp 1: Chuyển trạng thái SANG 'cancelled' (Hủy đơn -> Cộng lại kho)
+  IF NEW.status = 'cancelled' AND OLD.status != 'cancelled' THEN
+    FOR item IN SELECT product_id, quantity FROM public.order_items WHERE order_id = NEW.id LOOP
+      UPDATE public.products
+      SET stock_quantity = stock_quantity + item.quantity
+      WHERE id = item.product_id;
+    END LOOP;
+  
+  -- Trường hợp 2: Khôi phục từ 'cancelled' VỀ trạng thái khác (Kích hoạt lại đơn -> Trừ lại kho)
+  ELSIF OLD.status = 'cancelled' AND NEW.status != 'cancelled' THEN
+    FOR item IN SELECT product_id, quantity FROM public.order_items WHERE order_id = NEW.id LOOP
+      UPDATE public.products
+      SET stock_quantity = GREATEST(0, stock_quantity - item.quantity)
+      WHERE id = item.product_id;
+    END LOOP;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trigger_order_status_stock ON public.orders;
+CREATE TRIGGER trigger_order_status_stock
+AFTER UPDATE OF status ON public.orders
+FOR EACH ROW
+EXECUTE FUNCTION public.handle_order_status_stock_adjustment();
+
+-- 8. Trigger tự động CỘNG LẠI hàng tồn kho khi XÓA hẳn đơn hàng (hoặc xóa order_items)
+CREATE OR REPLACE FUNCTION public.restore_product_stock_on_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Chỉ cộng lại kho nếu đơn hàng đó CHƯA bị hủy (nếu đã hủy thì kho đã được cộng từ trước)
+  IF EXISTS (
+    SELECT 1 FROM public.orders 
+    WHERE id = OLD.order_id AND status != 'cancelled'
+  ) THEN
+    UPDATE public.products
+    SET stock_quantity = stock_quantity + OLD.quantity
+    WHERE id = OLD.product_id;
+  END IF;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trigger_restore_stock_on_delete ON public.order_items;
+CREATE TRIGGER trigger_restore_stock_on_delete
+AFTER DELETE ON public.order_items
+FOR EACH ROW
+EXECUTE FUNCTION public.restore_product_stock_on_delete();
