@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProductsPage() {
   const { data: products } = await supabase
     .from('products')
@@ -37,6 +39,11 @@ export default async function ProductsPage() {
                 <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-pink-600 shadow-sm">
                   {product.category || 'Handmade'}
                 </div>
+                {product.stock_quantity <= 0 && (
+                  <div className="absolute top-4 right-4 bg-rose-600/90 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm z-10">
+                    Hết hàng
+                  </div>
+                )}
               </div>
               <div className="p-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-pink-600 transition-colors">
@@ -46,6 +53,21 @@ export default async function ProductsPage() {
                   <span className="text-xl font-black text-pink-600">
                     {product.price.toLocaleString('vi-VN')} đ
                   </span>
+                  
+                  {/* Stock Level Indicator */}
+                  {product.stock_quantity <= 0 ? (
+                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 border border-rose-100/50">
+                      Hết hàng
+                    </span>
+                  ) : product.stock_quantity <= 5 ? (
+                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-100/50 animate-pulse">
+                      Chỉ còn {product.stock_quantity}
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-green-50 text-green-600 border border-green-100/50">
+                      Còn {product.stock_quantity}
+                    </span>
+                  )}
                 </div>
               </div>
             </Link>

@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import AddToCartSection from '@/components/AddToCartSection';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProductDetailPage({ params }: { params: { id: string } }) {
   const { data: product } = await supabase
     .from('products')
