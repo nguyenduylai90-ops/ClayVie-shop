@@ -74,11 +74,28 @@ export default async function HomePage() {
                   <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-pink-600 transition-colors">
                     {product.name}
                   </h3>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center mb-3">
                     <span className="text-xl font-black text-pink-600">
                       {product.price.toLocaleString('vi-VN')} đ
                     </span>
                     <span className="text-xs text-gray-400">Đã bán 12</span>
+                  </div>
+                  
+                  {/* Stock Level Indicator */}
+                  <div className="flex justify-start">
+                    {product.stock_quantity <= 0 ? (
+                      <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 border border-rose-100/50">
+                        Hết hàng
+                      </span>
+                    ) : product.stock_quantity <= 5 ? (
+                      <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-100/50 animate-pulse">
+                        Chỉ còn {product.stock_quantity} mẫu trong kho
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-green-50 text-green-600 border border-green-100/50">
+                        Còn hàng ({product.stock_quantity})
+                      </span>
+                    )}
                   </div>
                 </div>
               </Link>
