@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Upload, Image as ImageIcon, X, Link as LinkIcon, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
-export default function NewProductPage() {
+export default function EditProductPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const id = params.id;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [uploadProgress, setUploadProgress] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadErrorMsg, setUploadErrorMsg] = useState('');
   
@@ -26,6 +28,47 @@ export default function NewProductPage() {
   const [imageUrl, setImageUrl] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState('');
+
+  // Fetch current product data
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setFetching(true);
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setFormData({
+            name: data.name,
+            price: data.price.toString(),
+            description: data.description || '',
+            category: data.category || '',
+            stock_quantity: data.stock_quantity.toString(),
+          });
+          
+          if (data.image_url) {
+            setOriginalImageUrl(data.image_url);
+            setImagePreview(data.image_url);
+            // If it starts with http, we can also bind it to imageUrl for URL mode
+            setImageUrl(data.image_url);
+          }
+        }
+      } catch (err: any) {
+        alert('Lỗi tải sản phẩm: ' + err.message);
+        router.push('/admin/products');
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id, router]);
 
   // Handle file select
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,7 +109,12 @@ export default function NewProductPage() {
 
   const removeSelectedFile = () => {
     setSelectedFile(null);
-    setImagePreview(null);
+    // Revert to original image if any, or clear
+    if (originalImageUrl) {
+      setImagePreview(originalImageUrl);
+    } else {
+      setImagePreview(null);
+    }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -88,7 +136,6 @@ export default function NewProductPage() {
 
     if (uploadError) {
       setUploadProgress('error');
-      // Friendly message explaining how to configure Supabase storage
       if (uploadError.message.includes('bucket') || uploadError.message.includes('not found')) {
         throw new Error(
           "Storage bucket 'products' chưa được tạo hoặc không có quyền Public. Vui lòng vào trang quản trị Supabase > Storage > Tạo bucket tên 'products' ở chế độ PUBLIC (Công khai) và thêm RLS Policy cho phép Anonymous Upload."
@@ -112,41 +159,53 @@ export default function NewProductPage() {
     setUploadErrorMsg('');
 
     try {
-      let finalImageUrl = imageUrl;
+      let finalImageUrl = originalImageUrl;
 
-      // If file mode is active and a file is selected, upload it first
-      if (imageMode === 'file' && selectedFile) {
+      if (imageMode === 'url') {
+        finalImageUrl = imageUrl;
+      } else if (imageMode === 'file' && selectedFile) {
+        // Upload new image if selected
         finalImageUrl = await uploadImage(selectedFile);
       }
 
-      if (!finalImageUrl && imageMode === 'file') {
-        throw new Error("Vui lòng chọn file hình ảnh sản phẩm.");
+      if (!finalImageUrl) {
+        throw new Error("Sản phẩm bắt buộc phải có hình ảnh.");
       }
 
-      const { error } = await supabase.from('products').insert([
-        {
+      const { error } = await supabase
+        .from('products')
+        .update({
           name: formData.name,
           price: parseFloat(formData.price),
           description: formData.description,
           category: formData.category,
           stock_quantity: parseInt(formData.stock_quantity),
           image_url: finalImageUrl,
-        },
-      ]);
+        })
+        .eq('id', id);
 
       if (error) throw error;
 
-      alert('Thêm sản phẩm mới thành công! 🎉');
+      alert('Cập nhật sản phẩm thành công! 🎉');
       router.push('/admin/products');
       router.refresh();
     } catch (error: any) {
       setUploadErrorMsg(error.message);
       setUploadProgress('error');
-      alert('Lỗi: ' + error.message);
+      alert('Lỗi cập nhật: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
+
+  if (fetching) {
+    return (
+      <div className="max-w-3xl mx-auto py-24 flex flex-col items-center justify-center">
+        <div className="w-12 h-12 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin"></div>
+        <p className="text-gray-400 mt-4 font-semibold text-sm">Đang tải thông tin hoa đất sét...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-12 animate-fadeIn">
@@ -159,8 +218,8 @@ export default function NewProductPage() {
           <ArrowLeft size={18} />
         </Link>
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Thêm hoa mới</h1>
-          <p className="text-gray-500 text-sm">Tạo mẫu sản phẩm hoa đất sét mới cho gian hàng của bạn</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Chỉnh sửa hoa</h1>
+          <p className="text-gray-500 text-sm">Cập nhật thông tin chi tiết cho mẫu hoa đất sét của bạn</p>
         </div>
       </div>
 
@@ -172,7 +231,7 @@ export default function NewProductPage() {
             required
             type="text"
             className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-pink-500 outline-none font-bold text-slate-800"
-            placeholder="Ví dụ: Bó hoa đất sét Tulip hồng nhạt"
+            placeholder="Tên sản phẩm"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
@@ -187,7 +246,7 @@ export default function NewProductPage() {
               type="number"
               min="0"
               className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-pink-500 outline-none font-bold text-pink-600"
-              placeholder="Ví dụ: 350000"
+              placeholder="0"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
             />
@@ -227,7 +286,7 @@ export default function NewProductPage() {
           <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Mô tả chi tiết</label>
           <textarea
             className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-pink-500 outline-none font-medium h-32 resize-none text-slate-700"
-            placeholder="Nhập kích thước, chất liệu đất sét, màu sắc và cách bảo quản..."
+            placeholder="Mô tả sản phẩm"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
@@ -298,7 +357,7 @@ export default function NewProductPage() {
                     <Upload size={24} />
                   </div>
                   <div className="font-bold text-slate-700 text-sm">Kéo thả hoặc Nhấp để tải file ảnh lên</div>
-                  <div className="text-gray-400 text-xs">Hỗ trợ định dạng PNG, JPG, JPEG, WEBP (tối đa 5MB)</div>
+                  <div className="text-gray-400 text-xs">PNG, JPG, JPEG, WEBP (tối đa 5MB)</div>
                 </div>
               )}
             </div>
@@ -345,10 +404,10 @@ export default function NewProductPage() {
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                {uploadProgress === 'uploading' ? 'Đang tải ảnh lên...' : 'Đang lưu hoa...'}
+                {uploadProgress === 'uploading' ? 'Đang tải ảnh lên...' : 'Đang cập nhật...'}
               </span>
             ) : (
-              'Lưu sản phẩm'
+              'Cập nhật hoa'
             )}
           </button>
         </div>
