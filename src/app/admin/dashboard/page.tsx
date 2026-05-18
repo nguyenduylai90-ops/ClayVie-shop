@@ -75,18 +75,17 @@ export default async function AdminDashboard() {
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-pink-600 text-sm">{order.total_price.toLocaleString('vi-VN')} đ</div>
-                    <div className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full inline-block mt-1 ${
-                      order.status === 'completed'
-                        ? 'bg-green-50 text-green-600 border border-green-100/50'
-                        : order.status === 'cancelled'
-                        ? 'bg-rose-50 text-rose-600 border border-rose-100/50'
-                        : 'bg-amber-50 text-amber-600 border border-amber-100/50'
+                    <div className={`text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full inline-block mt-1 border ${
+                      order.status === 'completed' ? 'bg-green-50 text-green-600 border-green-100/50' :
+                      order.status === 'confirmed' ? 'bg-blue-50 text-blue-600 border-blue-100/50' :
+                      order.status === 'shipping' ? 'bg-purple-50 text-purple-600 border-purple-100/50' :
+                      order.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100/50' :
+                      'bg-rose-50 text-rose-600 border-rose-100/50'
                     }`}>
-                      {order.status === 'completed'
-                        ? 'Hoàn tất'
-                        : order.status === 'cancelled'
-                        ? 'Đã hủy'
-                        : 'Đang xử lý'}
+                      {order.status === 'completed' ? 'Hoàn tất' :
+                       order.status === 'confirmed' ? 'Đã chấp nhận' :
+                       order.status === 'shipping' ? 'Đang giao' :
+                       order.status === 'pending' ? 'Đang chờ' : 'Đã hủy'}
                     </div>
                   </div>
                 </div>

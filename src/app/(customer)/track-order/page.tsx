@@ -65,12 +65,17 @@ export default function TrackOrderPage() {
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Mã đơn hàng</p>
                 <p className="font-mono text-gray-600">#{order.id.slice(0, 8).toUpperCase()}</p>
               </div>
-              <div className={`px-4 py-1.5 rounded-full text-xs font-bold ${order.status === 'completed' ? 'bg-green-100 text-green-600' :
-                  order.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
-                    'bg-red-100 text-red-600'
-                }`}>
+              <div className={`px-4 py-1.5 rounded-full text-xs font-bold border ${
+                order.status === 'completed' ? 'bg-green-50 text-green-600 border-green-100/50' :
+                order.status === 'confirmed' ? 'bg-blue-50 text-blue-600 border-blue-100/50' :
+                order.status === 'shipping' ? 'bg-purple-50 text-purple-600 border-purple-100/50' :
+                order.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100/50' :
+                'bg-rose-50 text-rose-600 border-rose-100/50'
+              }`}>
                 {order.status === 'completed' ? 'Đã giao thành công' :
-                  order.status === 'pending' ? 'Đang xử lý' : 'Đã hủy'}
+                 order.status === 'confirmed' ? 'Đã chấp nhận đơn' :
+                 order.status === 'shipping' ? 'Đang giao hàng' :
+                 order.status === 'pending' ? 'Đang chờ xử lý' : 'Đã hủy đơn'}
               </div>
             </div>
 
